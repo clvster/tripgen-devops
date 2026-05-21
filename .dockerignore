@@ -1,0 +1,26 @@
+# ── Lab requirements ──────────────────────────────────────────────────────────
+docker-compose.yml
+docker-compose.override.yml
+.git
+.gitmodules
+*.env
+.env*
+*.md
+
+# ── Build artifacts ───────────────────────────────────────────────────────────
+**/target/
+**/node_modules/
+**/.next/
+**/dist/
+**/.nuxt/
+
+# ── IDE & OS ──────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ── CI/CD ─────────────────────────────────────────────────────────────────────
+.github/
+

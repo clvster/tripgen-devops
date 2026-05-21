@@ -1,0 +1,54 @@
+version: "3.8"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+
+services:
+  db:
+    image: postgres:latest
+    hostname: database_host          
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    expose:
+      - "5432" 
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ./TripGen             
+      dockerfile: ../docker/backend/Dockerfile
+    ports:
+      - "127.0.0.1:80:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database_host:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      - db
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./walk-app-tomsk      
+      dockerfile: ../docker/frontend/Dockerfile
+    ports:
+      - "127.0.0.1:3000:80"    
+    depends_on:
+      - app
+    networks:
+      - app-network
+    restart: unless-stopped
+

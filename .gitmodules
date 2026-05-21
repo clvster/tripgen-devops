@@ -1,0 +1,6 @@
+[submodule "TripGen"]
+	path = TripGen
+	url = https://github.com/CatGamer7/TripGen.git
+[submodule "walk-app-tomsk"]
+	path = walk-app-tomsk
+	url = https://github.com/nkz18maria-ui/walk-app-tomsk.git

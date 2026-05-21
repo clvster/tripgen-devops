@@ -1,0 +1,21 @@
+# Секреты — никогда в git
+.env
+*.env
+.env.*
+!.env.example
+
+# Docker
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Логи
+*.log
+logs/

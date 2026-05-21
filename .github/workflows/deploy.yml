@@ -1,0 +1,59 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            cd /opt/tripgen-devops
+
+            git fetch origin main
+            git checkout main
+            git pull origin main
+            git submodule update --init --remote --recursive
+
+            cat > .env <<ENVEOF
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            ENVIRONMENT=production
+            ENVEOF
+
+            docker compose -f docker-compose.yml up --build -d --remove-orphans
+            docker image prune -f
+            docker compose -f docker-compose.yml ps
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            sleep 10
+            curl --fail --silent http://127.0.0.1:80/actuator/health \
+              && echo "Backend: OK" || echo "Backend: not responding"
+            curl --fail --silent http://127.0.0.1:3000/ \
+              && echo "Frontend: OK" || echo "Frontend: not responding"
+
