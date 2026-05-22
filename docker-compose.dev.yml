@@ -38,7 +38,9 @@ services:
     depends_on:
       - db-dev
     networks:
-      - dev-network
+      dev-network:
+        aliases:
+          - app
     restart: unless-stopped
 
   frontend-dev:
