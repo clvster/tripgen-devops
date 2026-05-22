@@ -2,9 +2,7 @@ name: Update Submodules
 
 on:
   repository_dispatch:
-    types:
-      - backend-updated
-      - frontend-updated
+    types: [backend-updated, frontend-updated]
 
 jobs:
   update:
@@ -15,7 +13,7 @@ jobs:
         with:
           ref: dev
           submodules: recursive
-          token: ${{ secrets.GH_PAT }}   
+          token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
 
       - name: Configure git
@@ -26,20 +24,20 @@ jobs:
       - name: Update triggered submodule
         run: |
           if [ "${{ github.event.action }}" = "backend-updated" ]; then
-            echo "Updating TripGen submodule..."
             git submodule update --remote TripGen
-          elif [ "${{ github.event.action }}" = "frontend-updated" ]; then
-            echo "Updating walk-app-tomsk submodule..."
+            echo "SUBMODULE=TripGen" >> $GITHUB_ENV
+          else
             git submodule update --remote walk-app-tomsk
+            echo "SUBMODULE=walk-app-tomsk" >> $GITHUB_ENV
           fi
 
       - name: Commit and push if changed
         run: |
           git add .
           if git diff --staged --quiet; then
-            echo "No changes — submodule already up to date."
+            echo "Submodule already up to date, skipping."
           else
-            git commit -m "chore: update ${{ github.event.action == 'backend-updated' && 'TripGen' || 'walk-app-tomsk' }} submodule to latest main"
+            git commit -m "chore: update ${{ env.SUBMODULE }} to latest main [skip ci]"
             git push origin dev
           fi
 

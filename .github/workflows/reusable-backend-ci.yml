@@ -2,9 +2,6 @@ name: Reusable — Backend CI
 
 on:
   workflow_call:
-    secrets:
-      GH_PAT:
-        required: false
 
 jobs:
   lint:
@@ -23,9 +20,23 @@ jobs:
         run: mvn checkstyle:check -B --no-transfer-progress
 
   test:
-    name: Maven build & test
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: lint
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: tripgen_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -36,6 +47,11 @@ jobs:
           cache: maven
 
       - name: Run tests
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/tripgen_test
+          SPRING_DATASOURCE_USERNAME: test
+          SPRING_DATASOURCE_PASSWORD: test
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
         run: mvn test -B --no-transfer-progress
 
       - name: Upload test report
@@ -45,3 +61,4 @@ jobs:
           name: backend-test-report-${{ github.run_id }}
           path: target/surefire-reports/
           retention-days: 7
+

@@ -1,0 +1,57 @@
+name: Deploy — Dev
+
+on:
+  push:
+    branches: [dev]
+    paths-ignore:
+      - "VERSION"
+      - "**.md"
+
+jobs:
+  deploy-dev:
+    name: Deploy dev → VPS (dev.routegen.ru)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy dev via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            cd /opt/tripgen-devops
+
+            git fetch origin dev
+            git checkout dev
+            git pull origin dev
+            git submodule update --init --remote --recursive
+
+            cat > .env.dev <<EOF
+            POSTGRES_DB=${{ secrets.DEV_POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.DEV_POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.DEV_POSTGRES_PASSWORD }}
+            ENVIRONMENT=development
+            EOF
+
+            docker compose -f docker-compose.dev.yml --env-file .env.dev \
+              up --build -d --remove-orphans
+
+            docker image prune -f
+            docker compose -f docker-compose.dev.yml ps
+
+      - name: Dev health check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            sleep 10
+            curl --fail --silent http://127.0.0.1:8080/actuator/health \
+              && echo "Dev backend: OK" || echo "Dev backend: not responding"
+            curl --fail --silent http://127.0.0.1:3001/ \
+              && echo "Dev frontend: OK" || echo "Dev frontend: not responding"
+
