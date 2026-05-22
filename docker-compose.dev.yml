@@ -8,7 +8,6 @@ volumes:
   postgres-dev-data:
 
 services:
-
   db-dev:
     image: postgres:latest
     hostname: database_host
@@ -23,6 +22,11 @@ services:
     networks:
       - dev-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-tripgen_dev} -d $${POSTGRES_DB:-tripgen_dev}"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   app-dev:
     build:
@@ -36,7 +40,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
       ENVIRONMENT: development
     depends_on:
-      - db-dev
+      db-dev:
+        condition: service_healthy
     networks:
       dev-network:
         aliases:
