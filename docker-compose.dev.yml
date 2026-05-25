@@ -1,5 +1,3 @@
-version: "3.8"
-
 networks:
   dev-network:
     driver: bridge
@@ -10,7 +8,7 @@ volumes:
 services:
 
   db-dev:
-    image: postgres:latest
+    image: postgres:16-alpine
     hostname: database_host
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-tripgen_dev}
@@ -23,20 +21,29 @@ services:
     networks:
       - dev-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tripgen_dev"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
 
   app-dev:
     build:
       context: ./TripGen
       dockerfile: ../docker/backend/Dockerfile
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8082:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://database_host:5432/${POSTGRES_DB:-tripgen_dev}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-tripgen_dev}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      ORS_API_KEY: ${ORS_API_KEY:-placeholder}
       ENVIRONMENT: development
     depends_on:
-      - db-dev
+      db-dev:
+        condition: service_healthy
     networks:
       dev-network:
         aliases:
@@ -44,14 +51,19 @@ services:
     restart: unless-stopped
 
   frontend-dev:
-    build:
-      context: ./walk-app-tomsk
-      dockerfile: ../docker/frontend/Dockerfile
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./walk-app-tomsk:/app
+      - /app/node_modules
     ports:
-      - "127.0.0.1:3001:80"
+      - "127.0.0.1:3001:5173"
+    environment:
+      VITE_API_PROXY_TARGET: http://app:8080
+      CHOKIDAR_USEPOLLING: "true"
     depends_on:
       - app-dev
     networks:
       - dev-network
     restart: unless-stopped
-

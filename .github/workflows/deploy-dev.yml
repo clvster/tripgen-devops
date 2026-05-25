@@ -50,7 +50,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             sleep 10
-            curl --fail --silent http://127.0.0.1:8080/actuator/health \
+            curl --fail --silent http://127.0.0.1:8082/actuator/health \
               && echo "Dev backend: OK" || echo "Dev backend: not responding"
             curl --fail --silent http://127.0.0.1:3001/ \
               && echo "Dev frontend: OK" || echo "Dev frontend: not responding"

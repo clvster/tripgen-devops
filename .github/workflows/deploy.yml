@@ -88,7 +88,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             sleep 15
-            curl --fail --silent http://127.0.0.1:80/actuator/health \
+            curl --fail --silent http://127.0.0.1:8081/actuator/health \
               && echo "Backend: OK" || echo "Backend: not responding"
             curl --fail --silent http://127.0.0.1:3000/ \
               && echo "Frontend: OK" || echo "Frontend: not responding"
