@@ -52,6 +52,9 @@ jobs:
           SPRING_DATASOURCE_USERNAME: test
           SPRING_DATASOURCE_PASSWORD: test
           SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+          JWT_SECRET: testSecretKeyForCIOnlyNotUsedInProd1234
+          JWT_EXPIRATION: 86400000
+          ORS_API_KEY: placeholder
         run: mvn test -B --no-transfer-progress
 
       - name: Upload test report
@@ -61,4 +64,3 @@ jobs:
           name: backend-test-report-${{ github.run_id }}
           path: target/surefire-reports/
           retention-days: 7
-
