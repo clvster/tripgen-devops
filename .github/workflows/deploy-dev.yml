@@ -40,11 +40,11 @@ jobs:
             ENVIRONMENT=development
             EOF
 
-            docker compose -f docker-compose.dev.yml --env-file .env.dev \
+            docker compose -p tripgen-dev -f docker-compose.dev.yml --env-file .env.dev \
               up --build -d --remove-orphans
 
             docker image prune -f
-            docker compose -f docker-compose.dev.yml ps
+            docker compose -p tripgen-dev -f docker-compose.dev.yml ps
 
       - name: Dev health check
         uses: appleboy/ssh-action@v1.0.3
