@@ -37,7 +37,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "Submodule already up to date, skipping."
           else
-            git commit -m "chore: update ${{ env.SUBMODULE }} to latest main [skip ci]"
+            git commit -m "chore: update ${{ env.SUBMODULE }} to latest main"
             git push origin dev
           fi
-
