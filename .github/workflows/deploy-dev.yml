@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - "VERSION"
       - "**.md"
+  workflow_dispatch:
 
 jobs:
   deploy-dev:
@@ -26,12 +27,16 @@ jobs:
             git fetch origin dev
             git checkout dev
             git pull origin dev
+            cd walk-app-tomsk && git checkout -- . && cd ..
             git submodule update --init --remote --recursive
 
             cat > .env.dev <<EOF
             POSTGRES_DB=${{ secrets.DEV_POSTGRES_DB }}
             POSTGRES_USER=${{ secrets.DEV_POSTGRES_USER }}
             POSTGRES_PASSWORD=${{ secrets.DEV_POSTGRES_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_EXPIRATION=86400000
+            ORS_API_KEY=${{ secrets.ORS_API_KEY || 'placeholder' }}
             ENVIRONMENT=development
             EOF
 
@@ -49,9 +54,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
-            sleep 10
-            curl --fail --silent http://127.0.0.1:8080/actuator/health \
+            sleep 15
+            curl --fail --silent http://127.0.0.1:8082/actuator/health \
               && echo "Dev backend: OK" || echo "Dev backend: not responding"
             curl --fail --silent http://127.0.0.1:3001/ \
               && echo "Dev frontend: OK" || echo "Dev frontend: not responding"
-

@@ -66,12 +66,16 @@ jobs:
             git fetch origin main
             git checkout main
             git pull origin main
+            cd walk-app-tomsk && git checkout -- . && cd ..
             git submodule update --init --remote --recursive
 
             cat > .env <<EOF
             POSTGRES_DB=${{ secrets.POSTGRES_DB }}
             POSTGRES_USER=${{ secrets.POSTGRES_USER }}
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            JWT_SECRET=${{ secrets.PROD_JWT_SECRET }}
+            JWT_EXPIRATION=86400000
+            ORS_API_KEY=${{ secrets.ORS_API_KEY || 'placeholder' }}
             ENVIRONMENT=production
             EOF
 
@@ -88,8 +92,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             sleep 15
-            curl --fail --silent http://127.0.0.1:80/actuator/health \
+            curl --fail --silent http://127.0.0.1:8081/actuator/health \
               && echo "Backend: OK" || echo "Backend: not responding"
             curl --fail --silent http://127.0.0.1:3000/ \
               && echo "Frontend: OK" || echo "Frontend: not responding"
-
