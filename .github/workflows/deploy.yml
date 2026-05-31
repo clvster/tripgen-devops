@@ -70,9 +70,9 @@ jobs:
             ENVIRONMENT=production
             EOF
 
-            docker compose -f docker-compose.yml up --build -d --remove-orphans
+            docker compose -p tripgen-prod -f docker-compose.yml up --build -d --remove-orphans
             docker image prune -f
-            docker compose -f docker-compose.yml ps
+            docker compose -p tripgen-prod -f docker-compose.yml ps
 
       - name: Health check
         uses: appleboy/ssh-action@v1.0.3
